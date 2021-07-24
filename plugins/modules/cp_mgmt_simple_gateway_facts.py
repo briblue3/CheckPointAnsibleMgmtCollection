@@ -21,7 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -33,9 +33,10 @@ description:
   - Get simple-gateway objects facts on Check Point devices.
   - All operations are performed over Web Services API.
   - This module handles both operations, get a specific object and get several objects,
-    For getting a specific object use the parameter 'name'.
+    For getting a specific object use the parameter 'name' or 'uid'.
 version_added: "2.9"
-author: "Or Soffer (@chkp-orso)"
+author: "Or Soffer (@chkp-orso)",
+        Brianna Hill (@briblue3)
 options:
   name:
     description:
@@ -78,6 +79,11 @@ options:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
     type: bool
+  uid:
+    description:
+      - Object UID.
+        This parameter is relevant only for getting a specific object.
+    type: str
 extends_documentation_fragment: check_point.mgmt.checkpoint_facts
 """
 
@@ -114,7 +120,8 @@ def main():
             ASC=dict(type='str', choices=['name']),
             DESC=dict(type='str', choices=['name'])
         )),
-        show_membership=dict(type='bool')
+        show_membership=dict(type='bool'),
+        uid=dict(type='str')
     )
     argument_spec.update(checkpoint_argument_spec_for_facts)
 
@@ -124,7 +131,7 @@ def main():
     api_call_object_plural_version = "simple-gateways"
 
     result = api_call_facts(module, api_call_object, api_call_object_plural_version)
-    module.exit_json(ansible_facts=result)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
