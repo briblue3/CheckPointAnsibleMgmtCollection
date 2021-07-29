@@ -270,9 +270,7 @@ def api_call(module, api_call_object):
 
     if module.params['state'] == 'present':
         if equals_code == 200:
-            # else objects are equals and there is no need for set request
-            if not equals_response['equals']:
-                handle_call_and_set_result(connection, version, 'set-' + api_call_object, payload, module, result)
+            handle_call_and_set_result(connection, version, 'set-' + api_call_object, payload, module, result)
         elif equals_code == 404:
             handle_call_and_set_result(connection, version, 'add-' + api_call_object, payload, module, result)
     elif module.params['state'] == 'absent':
