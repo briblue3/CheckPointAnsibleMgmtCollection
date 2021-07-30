@@ -120,6 +120,7 @@ Modules
 * `cp_mgmt_group_with_exclusion_facts` – Get group-with-exclusion objects facts on Check Point over Web Services API
 * `cp_mgmt_host` – Manages host objects on Check Point over Web Services API
 * `cp_mgmt_host_facts` – Get host objects facts on Check Point over Web Services API
+* `cp_mgmt_install_database` – install database on Check Point over Web Services API
 * `cp_mgmt_install_policy` – install policy on Check Point over Web Services API
 * `cp_mgmt_mds_facts` – Get Multi-Domain Server (mds) objects facts on Check Point over Web Services API
 * `cp_mgmt_multicast_address_range` – Manages multicast-address-range objects on Check Point over Web Services API
