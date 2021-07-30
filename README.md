@@ -103,6 +103,7 @@ Modules
 * `cp_mgmt_application_site_group` – Manages application-site-group objects on Check Point over Web Services API
 * `cp_mgmt_application_site_group_facts` – Get application-site-group objects facts on Check Point over Web Services API
 * `cp_mgmt_assign_global_assignment` – assign global assignment on Check Point over Web Services API
+* `cp_mgmt_checkpoint_host` – Manages checkpoint-host objects on Check Point over Web Services API
 * `cp_mgmt_checkpoint_host_facts` – Get checkpoint-host objects facts on Check Point over Web Services API
 * `cp_mgmt_discard` – All changes done by user are discarded and removed from database
 * `cp_mgmt_dns_domain` – Manages dns-domain objects on Check Point over Web Services API
