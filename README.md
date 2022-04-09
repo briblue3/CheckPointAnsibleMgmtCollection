@@ -3,7 +3,7 @@ This Ansible collection provides control over a Check Point Management server us
 Check Point's web-services APIs.
 
 The Ansible Check Point modules reference can be found here:
-https://docs.ansible.com/ansible/latest/collections/check_point/mgmt/index.html#plugins-in-check-point-mgmt
+https://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#check-point
 <br>Note - look only at the `cp_mgmt_*` modules, cause the `checkpoint_*` will be deprecated.
 
 This is the repository of the mgmt collection which can be found here - https://galaxy.ansible.com/check_point/mgmt
@@ -56,21 +56,21 @@ Example playbook:
         subnet: "4.1.76.0"
         mask_length: 24
         auto_publish_session: true
-
-      vars:
+        
+      vars: 
         ansible_checkpoint_domain: "SMC User"
 ```
 Note - If you want to run against Ansible version 2.9 instead of the collection, just replace `check_point.mgmt.cp_mgmt_network` with `cp_mgmt_network`
 
 ###  Notes:
-  1. Because this Ansible module is controlling the management server remotely via the web API,
+  1. Because this Ansible module is controlling the management server remotely via the web API, 
      the Ansible server needs to have access to the Check Point API server.
      Open `SmartConsole`, navigate to "Manage & Settings > Blades > Management API > Advanced settings"
      and check the API server's accessibility set
   2. Ansible has a feature called "Check Mode" that enables you to test the
      changes without actually changing anything.
   3. The login and logout happens automatically.
-  4. If you want to login to a specific domain, in the playbook above in the `vars`secion change the domain name to
+  4. If you want to login to a specific domain, in the playbook above in the `vars`secion change the domain name to 
      `ansible_checkpoint_domain`
   5. There are two ways to publish changes:
     a. Set the `auto_publish_session` to `true` as displayed in the example playbook above.
@@ -91,7 +91,6 @@ Modules
 * `cp_mgmt_access_role` – Manages access-role objects on Check Point over Web Services API
 * `cp_mgmt_access_role_facts` – Get access-role objects facts on Check Point over Web Services API
 * `cp_mgmt_access_rule` – Manages access-rule objects on Check Point over Web Services API
-* `cp_mgmt_access_rules` – Manages a list of access rules objects on Check Point over Web Services API
 * `cp_mgmt_access_rule_facts` – Get access-rule objects facts on Check Point over Web Services API
 * `cp_mgmt_address_range` – Manages address-range objects on Check Point over Web Services API
 * `cp_mgmt_address_range_facts` – Get address-range objects facts on Check Point over Web Services API
@@ -120,8 +119,6 @@ Modules
 * `cp_mgmt_host` – Manages host objects on Check Point over Web Services API
 * `cp_mgmt_host_facts` – Get host objects facts on Check Point over Web Services API
 * `cp_mgmt_install_policy` – install policy on Check Point over Web Services API
-* `cp_mgmt_install_database` – install database on Check Point over Web Services API
-* `cp_mgmt_mds` – Multi-Domain Server (mds) objects on Check Point over Web Services API
 * `cp_mgmt_mds_facts` – Get Multi-Domain Server (mds) objects facts on Check Point over Web Services API
 * `cp_mgmt_multicast_address_range` – Manages multicast-address-range objects on Check Point over Web Services API
 * `cp_mgmt_multicast_address_range_facts` – Get multicast-address-range objects facts on Check Point over Web Services API
@@ -178,11 +175,3 @@ Modules
 * `cp_mgmt_vpn_community_star_facts` – Get vpn-community-star objects facts on Check Point over Web Services API
 * `cp_mgmt_wildcard` – Manages wildcard objects on Check Point over Web Services API
 * `cp_mgmt_wildcard_facts` – Get wildcard objects facts on Check Point over Web Services API
-* `cp_mgmt_add_domain` – Add new domain on Check Point over Web Services API
-* `cp_mgmt_set_domain` – Edit existing domain on Check Point over Web Services API
-* `cp_mgmt_delete_domain` – Delete existing domain on Check Point over Web Services API
-* `cp_mgmt_domain_facts` – Get domain objects on Check Point over Web Services API
-* `cp_mgmt_trusted_client` – Trusted client objects on Check Point over Web Services API
-* `cp_mgmt_trusted_client_facts` – Get trusted client objects facts on Check Point over Web Services API
-* `cp_mgmt_identity_tag` – Identity tag objects on Check Point over Web Services API
-* `cp_mgmt_identity_tag_facts` – Get identity tag objects facts on Check Point over Web Services API

@@ -34,12 +34,6 @@ import time
 
 from ansible.module_utils.connection import Connection
 
-checkpoint_argument_spec_for_action_module = dict(
-    auto_publish_session=dict(type='bool'),
-    wait_for_task_timeout=dict(type='int', default=30),
-    version=dict(type='str')
-)
-
 checkpoint_argument_spec_for_objects = dict(
     auto_publish_session=dict(type='bool'),
     wait_for_task=dict(type='bool', default=True),
@@ -103,17 +97,6 @@ def get_payload_from_parameters(params):
                     parameter = "version"
 
                 payload[parameter.replace("_", "-")] = parameter_value
-
-            # action module "access_rules" - convert position_by_rule to position
-            if parameter == "position_by_rule":
-                if 'below' in params['position_by_rule'].keys() and params['position_by_rule']['below']:
-                    position = {'position': {'below': params['position_by_rule']['below']}}
-                    payload.update(position)
-                elif 'above' in params['position_by_rule'].keys() and params['position_by_rule']['above']:
-                    position = {'position': {'above': params['position_by_rule']['above']}}
-                    payload.update(position)
-                del payload['position-by-rule']
-
     return payload
 
 
@@ -148,28 +131,14 @@ def wait_for_task(module, version, connection, task_id):
         completed_tasks = 0
         for task in response['tasks']:
             if task['status'] == 'failed':
-                status_description, comments = get_status_description_and_comments(task)
-                if comments and status_description:
-                    module.fail_json(
-                        msg='Task {0} with task id {1} failed. Message: {2} with description: {3} - '
-                            'Look at the logs for more details '
-                            .format(task['task-name'], task['task-id'], comments, status_description))
-                elif comments:
-                    module.fail_json(msg='Task {0} with task id {1} failed. Message: {2} - Look at the logs for more details '
-                                         .format(task['task-name'], task['task-id'], comments))
-                elif status_description:
-                    module.fail_json(msg='Task {0} with task id {1} failed. Message: {2} - Look at the logs for more '
-                                         'details '
-                                     .format(task['task-name'], task['task-id'], status_description))
-                else:
-                    module.fail_json(msg='Task {0} with task id {1} failed. Look at the logs for more details'
-                                     .format(task['task-name'], task['task-id']))
+                module.fail_json(msg='Task {0} with task id {1} failed. Look at the logs for more details'
+                                 .format(task['task-name'], task['task-id']))
             if task['status'] == 'in progress':
                 break
             completed_tasks += 1
 
         # Are we done? check if all tasks are completed
-        if completed_tasks == len(response["tasks"]) and completed_tasks != 0:
+        if completed_tasks == len(response["tasks"]):
             task_complete = True
         else:
             time.sleep(2)  # Wait for two seconds
@@ -179,32 +148,13 @@ def wait_for_task(module, version, connection, task_id):
         return response
 
 
-# Getting a status description and comments of task failure details
-def get_status_description_and_comments(task):
-    status_description = None
-    comments = None
-    if 'comments' in task and task['comments']:
-        comments = task['comments']
-    if 'task-details' in task and task['task-details']:
-        task_details = task['task-details'][0]
-        if 'statusDescription' in task_details:
-            status_description = task_details['statusDescription']
-    return status_description, comments
-
-
 # if failed occurred, in some cases we want to discard changes before exiting. We also notify the user about the `discard`
 def discard_and_fail(module, code, response, connection, version):
     discard_code, discard_response = send_request(connection, version, 'discard')
     if discard_code != 200:
-        try:
-            module.fail_json(msg=parse_fail_message(code, response) + ' Failed to discard session {0}'
-                                                                      ' with error {1} with message {2}'.format(connection.get_session_uid(),
-                                                                                                                discard_code, discard_response))
-        except Exception:
-            # Read-only mode without UID
-            module.fail_json(msg=parse_fail_message(code, response) + ' Failed to discard session'
-                                                                      ' with error {0} with message {1}'.format(discard_code, discard_response))
-
+        module.fail_json(msg=parse_fail_message(code, response) + ' Failed to discard session {0}'
+                                                                  ' with error {1} with message {2}'.format(connection.get_session_uid(),
+                                                                                                            discard_code, discard_response))
     module.fail_json(msg=parse_fail_message(code, response) + ' Unpublished changes were discarded')
 
 
@@ -239,16 +189,7 @@ def handle_call(connection, version, call, payload, module, to_publish, to_disca
             discard_and_fail(module, code, response, connection, version)
         else:
             module.fail_json(msg=parse_fail_message(code, response))
-    else:
-        if 'wait_for_task' in module.params and module.params['wait_for_task']:
-            if 'task-id' in response:
-                response = wait_for_task(module, version, connection, response['task-id'])
-            elif 'tasks' in response:
-                for task in response['tasks']:
-                    if 'task-id' in task:
-                        task_id = task['task-id']
-                        response[task_id] = wait_for_task(module, version, connection, task['task-id'])
-                del response['tasks']
+
     if to_publish:
         handle_publish(module, connection, version)
     return response
@@ -331,12 +272,8 @@ def api_call(module, api_call_object):
         if equals_code == 200:
             # else objects are equals and there is no need for set request
             if not equals_response['equals']:
-                if 'lsm-cluster' == api_call_object:
-                    build_lsm_cluster_payload(payload, 'set')
                 handle_call_and_set_result(connection, version, 'set-' + api_call_object, payload, module, result)
         elif equals_code == 404:
-            if 'lsm-cluster' == api_call_object:
-                build_lsm_cluster_payload(payload, 'add')
             handle_call_and_set_result(connection, version, 'add-' + api_call_object, payload, module, result)
     elif module.params['state'] == 'absent':
         handle_delete(equals_code, payload, delete_params, connection, version, api_call_object, module, result)
@@ -347,30 +284,7 @@ def api_call(module, api_call_object):
 # get the position in integer format
 def get_number_from_position(payload, connection, version):
     if 'position' in payload:
-        if type(payload['position']) is not dict:
-            position = payload['position']
-        else:
-            position = None
-            payload_for_show_access_rulebase = {'name': payload['layer']}
-            code, response = send_request(connection, version, 'show-access-rulebase', payload_for_show_access_rulebase)
-            rulebase = response['rulebase']
-            for rules in rulebase:
-                if 'rulebase' in rules:
-                    rules = rules['rulebase']
-                    for rule in rules:
-                        if 'below' in payload['position'].keys() and rule['name'] == payload['position']['below']:
-                            position = int(rule['rule-number']) + 1
-                            return position
-                        elif 'above' in payload['position'].keys() and rule['name'] == payload['position']['above']:
-                            position = max(int(rule['rule-number']) - 1, 1)
-                            return position
-                elif 'below' in payload['position'].keys() and rules['name'] == payload['position']['below']:
-                    position = int(rules['rule-number']) + 1
-                    return position
-                elif 'above' in payload['position'].keys() and rules['name'] == payload['position']['above']:
-                    position = max(int(rules['rule-number']) - 1, 1)
-                    return position
-            return position
+        position = payload['position']
     else:
         return None
 
@@ -404,17 +318,6 @@ def build_rulebase_payload(api_call_object, payload, position_number):
         rulebase_payload['rule-name'] = payload['rule-name']
 
     return rulebase_payload
-
-
-def build_lsm_cluster_payload(payload, operator):
-    fields = ['security-profile', 'name-prefix', 'name-suffix', 'main-ip-address']
-    if operator == 'add':
-        del payload['name']
-    else:
-        for field in fields:
-            if field in payload.keys():
-                del payload[field]
-    return payload
 
 
 def build_rulebase_command(api_call_object):
@@ -486,11 +389,8 @@ def is_equals_with_all_params(payload, connection, version, api_call_object, is_
         payload_for_show = extract_payload_with_some_params(payload, ['name', 'uid', 'layer'])
         code, response = send_request(connection, version, 'show-' + api_call_object, payload_for_show)
         exist_action = response['action']['name']
-        if exist_action.lower() != payload['action'].lower():
-            if payload['action'].lower() != 'Apply Layer'.lower() or\
-                    exist_action.lower() != 'Inner Layer'.lower():
-                return False
-
+        if exist_action != payload['action']:
+            return False
     # here the action is equals, so check the position param
     if not is_equals_with_position_param(payload, connection, version, api_call_object):
         return False
@@ -599,26 +499,3 @@ def install_policy(connection, policy_package, targets):
                'targets': targets}
 
     connection.send_request('/web_api/install-policy', payload)
-
-
-def prepare_rule_params_for_execute_module(rule, module_args, position, below_rule_name):
-    rule['layer'] = module_args['layer']
-    if 'details_level' in module_args.keys():
-        rule['details_level'] = module_args['details_level']
-    if 'state' not in rule.keys() or ('state' in rule.keys() and rule['state'] != 'absent'):
-        if below_rule_name:
-            position_by_rule = {'position_by_rule': {'below': below_rule_name}}
-            rule.update(position_by_rule)
-        else:
-            rule['position'] = position
-        position = position + 1
-        below_rule_name = rule['name']
-
-    return rule, position, below_rule_name
-
-
-def check_if_to_publish_for_action(result, module_args):
-    to_publish = ('auto_publish_session' in module_args.keys() and module_args['auto_publish_session']) and \
-                 ('changed' in result.keys() and result['changed'] is True) and ('failed' not in result.keys() or
-                                                                                 result['failed'] is False)
-    return to_publish
