@@ -27,40 +27,32 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: cp_mgmt_delete_api_key
-short_description: Delete the API key. For the key to be invalid publish is needed.
+module: cp_mgmt_install_database
+short_description: Copies the user database and network objects information to specified targets.
 description:
-  - Delete the API key. For the key to be invalid publish is needed.
+  - Copies the user database and network objects information to specified targets.
   - All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
-  api_key:
+  targets:
     description:
-      - API key to be deleted.
-    type: str
-  admin_uid:
-    description:
-      - Administrator uid to generate API key for.
-    type: str
-  admin_name:
-    description:
-      - Administrator name to generate API key for.
-    type: str
+      - Check Point host(s) with one or more Management Software Blades enabled. The targets can be identified by their name or unique identifier.
+    type: list
 extends_documentation_fragment: check_point.mgmt.checkpoint_commands
 """
 
 EXAMPLES = """
-- name: delete-api-key
-  cp_mgmt_delete_api_key:
-    #sgignore next_line
-    api_key: eea3be76f4a8eb740ee872bcedc692748ff256a2d21c9ffd2754facbde046d00
-    state: absent
+- name: install-database
+  cp_mgmt_install_database:
+    targets:
+    - checkpointhost1
+    - checkpointhost2
 """
 
 RETURN = """
-cp_mgmt_delete_api_key:
-  description: The checkpoint delete-api-key output.
+cp_mgmt_install_database:
+  description: The checkpoint install-database output.
   returned: always.
   type: dict
 """
@@ -71,15 +63,13 @@ from ansible_collections.check_point.mgmt.plugins.module_utils.checkpoint import
 
 def main():
     argument_spec = dict(
-        api_key=dict(type='str'),
-        admin_uid=dict(type='str'),
-        admin_name=dict(type='str')
+        targets=dict(type='list')
     )
     argument_spec.update(checkpoint_argument_spec_for_commands)
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    command = "delete-api-key"
+    command = "install-database"
 
     result = api_command(module, command)
     module.exit_json(**result)

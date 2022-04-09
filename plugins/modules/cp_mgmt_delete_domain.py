@@ -27,40 +27,45 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: cp_mgmt_delete_api_key
-short_description: Delete the API key. For the key to be invalid publish is needed.
+module: cp_mgmt_delete_domain
+short_description: Delete existing object using object name or uid.
 description:
-  - Delete the API key. For the key to be invalid publish is needed.
+  - Delete existing object using object name or uid.
   - All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
-  api_key:
+  name:
     description:
-      - API key to be deleted.
+      - Object name.
     type: str
-  admin_uid:
+    required: True
+  details_level:
     description:
-      - Administrator uid to generate API key for.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed
+        representation of the object.
     type: str
-  admin_name:
+    choices: ['uid', 'standard', 'full']
+  ignore_warnings:
     description:
-      - Administrator name to generate API key for.
-    type: str
+      - Apply changes ignoring warnings.
+    type: bool
+  ignore_errors:
+    description:
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
+    type: bool
 extends_documentation_fragment: check_point.mgmt.checkpoint_commands
 """
 
 EXAMPLES = """
-- name: delete-api-key
-  cp_mgmt_delete_api_key:
-    #sgignore next_line
-    api_key: eea3be76f4a8eb740ee872bcedc692748ff256a2d21c9ffd2754facbde046d00
-    state: absent
+- name: delete-domain
+  cp_mgmt_delete_domain:
+    name: domain1
 """
 
 RETURN = """
-cp_mgmt_delete_api_key:
-  description: The checkpoint delete-api-key output.
+cp_mgmt_domain:
+  description: The checkpoint delete-domain output.
   returned: always.
   type: dict
 """
@@ -71,15 +76,15 @@ from ansible_collections.check_point.mgmt.plugins.module_utils.checkpoint import
 
 def main():
     argument_spec = dict(
-        api_key=dict(type='str'),
-        admin_uid=dict(type='str'),
-        admin_name=dict(type='str')
+        name=dict(type='str', required=True),
+        details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+        ignore_warnings=dict(type='bool'),
+        ignore_errors=dict(type='bool'),
     )
     argument_spec.update(checkpoint_argument_spec_for_commands)
 
     module = AnsibleModule(argument_spec=argument_spec)
-
-    command = "delete-api-key"
+    command = 'delete-domain'
 
     result = api_command(module, command)
     module.exit_json(**result)
